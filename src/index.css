@@ -1,0 +1,17 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #f7f9fb;
+}
+
+img {
+  display: block;
+}
+
