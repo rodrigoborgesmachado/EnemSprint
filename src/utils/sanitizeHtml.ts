@@ -9,7 +9,7 @@ function injectAnexoLinks(html: string, anexos?: AnexoLike[]): string {
     const id = `divAnexo${index}`
     const idRegex = new RegExp(`(<img[^>]*id=[\"']${id}[\"'][^>]*)(>)`, 'i')
     if (idRegex.test(result)) {
-      result = result.replace(idRegex, (match, prefix: string, suffix: string) => {
+      result = result.replace(idRegex, (_match, prefix: string, suffix: string) => {
         const hasSrc = /src=[\"'][^\"']*[\"']/.test(prefix)
         const updated = hasSrc
           ? prefix.replace(/src=[\"'][^\"']*[\"']/, `src=\"${anexo.link}\"`)
