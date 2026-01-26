@@ -17,6 +17,7 @@ import { getTests, isApiError } from '../api/client'
 import type { TestItem } from '../models/types'
 import { TestCard } from '../components/TestCard'
 import { useTestSession } from '../context/TestSessionContext'
+import { getHistory, type StoredAttempt } from '../storage/historyStorage'
 
 const durationOptions = [
   { label: '30m', value: 1800 },
@@ -70,6 +71,7 @@ export function HomePage() {
   const [examFilter, setExamFilter] = useState<ExamFilter>('ENEM')
   const [selectedTest, setSelectedTest] = useState<TestItem | null>(null)
   const [selectedDuration, setSelectedDuration] = useState<number | null>(null)
+  const [historyMap, setHistoryMap] = useState<Map<string, StoredAttempt>>(new Map())
 
   useEffect(() => {
     let isMounted = true
@@ -91,6 +93,17 @@ export function HomePage() {
     return () => {
       isMounted = false
     }
+  }, [])
+
+  useEffect(() => {
+    const attempts = getHistory()
+    const map = new Map<string, StoredAttempt>()
+    attempts.forEach((attempt) => {
+      if (!map.has(attempt.testCode)) {
+        map.set(attempt.testCode, attempt)
+      }
+    })
+    setHistoryMap(map)
   }, [])
 
   const filteredTests = useMemo(() => {
@@ -118,6 +131,15 @@ export function HomePage() {
 
   const handleConfirmStart = () => {
     if (!selectedTest || !selectedDuration) return
+    const attemptId =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+    try {
+      sessionStorage.setItem('enemsprint.currentAttemptId', attemptId)
+    } catch {
+      // ignore session storage errors
+    }
     dispatch({ type: 'RESET_SESSION' })
     dispatch({ type: 'SET_TEST', payload: selectedTest })
     dispatch({
@@ -184,11 +206,16 @@ export function HomePage() {
                   gap: 2,
                 }}
               >
-                {filteredTests.map((test) => (
-                  <TestCard key={test.codigo} test={test} onStart={handleStart} />
-                ))}
-              </Box>
-            )}
+              {filteredTests.map((test) => (
+                <TestCard
+                  key={test.codigo}
+                  test={test}
+                  onStart={handleStart}
+                  lastAttempt={historyMap.get(String(test.codigo))}
+                />
+              ))}
+            </Box>
+          )}
           </Box>
         </Stack>
       </Container>

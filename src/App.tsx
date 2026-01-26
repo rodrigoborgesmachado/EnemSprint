@@ -1,7 +1,8 @@
 import { Box, Container, Link, Stack, Typography } from '@mui/material'
-import { Link as RouterLink, Route, Routes } from 'react-router-dom'
+import { Link as RouterLink, Route, Routes, useLocation } from 'react-router-dom'
 import { AboutPage } from './pages/AboutPage'
 import { ContactPage } from './pages/ContactPage'
+import { HistoryPage } from './pages/HistoryPage'
 import { HomePage } from './pages/HomePage'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { TestRunnerPage } from './pages/TestRunnerPage'
@@ -9,6 +10,9 @@ import { ResultPage } from './pages/ResultPage'
 import { Navbar } from './components/Navbar'
 
 export function App() {
+  const location = useLocation()
+  const hideNavbar = location.pathname.startsWith('/test/')
+
   return (
     <Box
       sx={{
@@ -18,7 +22,7 @@ export function App() {
         background: 'radial-gradient(circle at top, #f5f1e8 0%, #f7f9fb 45%, #f0f4f8 100%)',
       }}
     >
-      <Navbar />
+      {hideNavbar ? null : <Navbar />}
       <Box sx={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -27,6 +31,7 @@ export function App() {
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/history" element={<HistoryPage />} />
         </Routes>
       </Box>
       <Box component="footer" sx={{ borderTop: '1px solid', borderColor: 'divider', py: 3 }}>

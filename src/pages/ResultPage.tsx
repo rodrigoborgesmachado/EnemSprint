@@ -1,11 +1,24 @@
-import { useMemo } from 'react'
-import { Box, Button, Container, Stack, Typography } from '@mui/material'
+import { useEffect, useMemo } from 'react'
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ResultCharts } from '../components/ResultCharts'
 import { ReviewItem } from '../components/ReviewItem'
 import { useTestSession } from '../context/TestSessionContext'
 import { computeResults } from '../utils/computeResults'
 import { formatTime } from '../utils/formatTime'
+import { addAttempt, getHistory, type ExamType, type StoredAttempt } from '../storage/historyStorage'
 
 function getDefaultDuration(nomeProva: string): number {
   const lower = nomeProva.toLowerCase()
@@ -18,6 +31,7 @@ export function ResultPage() {
   const navigate = useNavigate()
   const { codigo } = useParams()
   const { state, dispatch } = useTestSession()
+  const MIN_QUESTIONS_FOR_RANKING = 3
 
   const results = useMemo(() => {
     if (state.results) return state.results
@@ -41,8 +55,110 @@ export function ResultPage() {
     )
   }
 
+  const resolveExamType = (testName?: string, banca?: string): ExamType => {
+    const name = testName?.toLowerCase() ?? ''
+    const bank = banca?.toLowerCase() ?? ''
+    if (name.includes('enem') || bank.includes('inep')) return 'ENEM'
+    if (name.includes('iftm') || bank.includes('iftm')) return 'IFTM'
+    if (name.includes('ufu') || bank.includes('ufu')) return 'UFU'
+    return 'UNKNOWN'
+  }
+
+  const subjectStats = useMemo(() => {
+    const stats = results.perMateria.map((item) => {
+      const rawLabel = item.materia?.trim() || 'Sem categoria'
+      const label = rawLabel.toLowerCase() === 'sem materia' ? 'Sem categoria' : rawLabel
+      const accuracy = item.total > 0 ? Math.round((item.correct / item.total) * 1000) / 10 : 0
+      return {
+        subject: label,
+        total: item.total,
+        correct: item.correct,
+        wrong: item.wrong,
+        blank: item.blank,
+        accuracy,
+      }
+    })
+
+    return stats.sort((a, b) => {
+      if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy
+      return b.total - a.total
+    })
+  }, [results.perMateria])
+
+  const rankedSubjects = useMemo(
+    () => subjectStats.filter((item) => item.total >= MIN_QUESTIONS_FOR_RANKING),
+    [subjectStats]
+  )
+
+  const bestSubjects = useMemo(
+    () =>
+      [...rankedSubjects]
+        .sort((a, b) => {
+          if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy
+          return b.total - a.total
+        })
+        .slice(0, 3),
+    [rankedSubjects]
+  )
+
+  const improvementSubjects = useMemo(
+    () =>
+      [...rankedSubjects]
+        .sort((a, b) => {
+          if (a.accuracy !== b.accuracy) return a.accuracy - b.accuracy
+          return b.total - a.total
+        })
+        .slice(0, 3),
+    [rankedSubjects]
+  )
+
+  useEffect(() => {
+    try {
+      const attemptId = sessionStorage.getItem('enemsprint.currentAttemptId')
+      if (!attemptId) return
+      const existing = getHistory().some((item) => item.attemptId === attemptId)
+      if (existing) return
+
+      const testName = state.selectedTest?.nomeProva ?? ''
+      const examType = resolveExamType(testName, state.selectedTest?.banca)
+      const total = results.correctCount + results.wrongCount + results.blankCount
+      const scorePercent = total > 0 ? Math.round((results.correctCount / total) * 1000) / 10 : 0
+
+      const attempt: StoredAttempt = {
+        attemptId,
+        testCode: String(codigo ?? ''),
+        testName,
+        examType,
+        createdAt: new Date().toISOString(),
+        durationSeconds: state.durationSeconds ?? 0,
+        totals: {
+          total,
+          correct: results.correctCount,
+          wrong: results.wrongCount,
+          blank: results.blankCount,
+          scorePercent,
+        },
+        subjectStats,
+      }
+
+      addAttempt(attempt)
+      sessionStorage.removeItem('enemsprint.currentAttemptId')
+    } catch {
+      // ignore persistence errors
+    }
+  }, [codigo, results, state.durationSeconds, state.selectedTest, subjectStats])
+
   const handleRetake = () => {
     const selectedTest = state.selectedTest
+    const attemptId =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+    try {
+      sessionStorage.setItem('enemsprint.currentAttemptId', attemptId)
+    } catch {
+      // ignore session storage errors
+    }
     dispatch({ type: 'RESET_SESSION' })
     if (selectedTest) {
       dispatch({ type: 'SET_TEST', payload: selectedTest })
@@ -83,6 +199,69 @@ export function ResultPage() {
             <Box sx={{ flex: 1 }}>
               <ResultCharts results={results} />
             </Box>
+          </Stack>
+
+          <Stack spacing={2}>
+            <Typography variant="h5">Performance por matéria</Typography>
+            <Paper variant="outlined">
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Matéria</TableCell>
+                    <TableCell align="right">Total</TableCell>
+                    <TableCell align="right">Acertos</TableCell>
+                    <TableCell align="right">Erros</TableCell>
+                    <TableCell align="right">Em branco</TableCell>
+                    <TableCell align="right">% de acerto</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {subjectStats.map((item) => (
+                    <TableRow key={item.subject}>
+                      <TableCell>{item.subject}</TableCell>
+                      <TableCell align="right">{item.total}</TableCell>
+                      <TableCell align="right">{item.correct}</TableCell>
+                      <TableCell align="right">{item.wrong}</TableCell>
+                      <TableCell align="right">{item.blank}</TableCell>
+                      <TableCell align="right">{item.accuracy.toFixed(1)}%</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+
+            {rankedSubjects.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                Ainda não há dados suficientes para ranking por matéria.
+              </Typography>
+            ) : (
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Pontos fortes
+                  </Typography>
+                  <Stack spacing={1}>
+                    {bestSubjects.map((item) => (
+                      <Typography key={item.subject} variant="body2" color="text.secondary">
+                        {item.subject} — {Math.round(item.accuracy)}% ({item.correct}/{item.total})
+                      </Typography>
+                    ))}
+                  </Stack>
+                </Paper>
+                <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Pontos a melhorar
+                  </Typography>
+                  <Stack spacing={1}>
+                    {improvementSubjects.map((item) => (
+                      <Typography key={item.subject} variant="body2" color="text.secondary">
+                        {item.subject} — {Math.round(item.accuracy)}% ({item.correct}/{item.total})
+                      </Typography>
+                    ))}
+                  </Stack>
+                </Paper>
+              </Stack>
+            )}
           </Stack>
 
           <Stack spacing={2}>
