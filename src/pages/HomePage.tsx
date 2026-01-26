@@ -171,23 +171,25 @@ export function HomePage() {
             onChange={(event) => setSearch(event.target.value)}
             fullWidth
           />
-          {loading ? (
-            <Typography>Carregando provas...</Typography>
-          ) : error ? (
-            <Typography color="error">{error}</Typography>
-          ) : (
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-                gap: 2,
-              }}
-            >
-              {filteredTests.map((test) => (
-                <TestCard key={test.codigo} test={test} onStart={handleStart} />
-              ))}
-            </Box>
-          )}
+          <Box id="tests">
+            {loading ? (
+              <Typography>Carregando provas...</Typography>
+            ) : error ? (
+              <Typography color="error">{error}</Typography>
+            ) : (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+                  gap: 2,
+                }}
+              >
+                {filteredTests.map((test) => (
+                  <TestCard key={test.codigo} test={test} onStart={handleStart} />
+                ))}
+              </Box>
+            )}
+          </Box>
         </Stack>
       </Container>
 
