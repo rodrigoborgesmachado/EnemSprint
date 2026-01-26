@@ -1,6 +1,8 @@
 import { Box, Container, Link, Stack, Typography } from '@mui/material'
-import { Route, Routes } from 'react-router-dom'
+import { Link as RouterLink, Route, Routes } from 'react-router-dom'
+import { ContactPage } from './pages/ContactPage'
 import { HomePage } from './pages/HomePage'
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage'
 import { TestRunnerPage } from './pages/TestRunnerPage'
 import { ResultPage } from './pages/ResultPage'
 
@@ -19,6 +21,8 @@ export function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/test/:codigo" element={<TestRunnerPage />} />
           <Route path="/result/:codigo" element={<ResultPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/contact" element={<ContactPage />} />
         </Routes>
       </Box>
       <Box component="footer" sx={{ borderTop: '1px solid', borderColor: 'divider', py: 3 }}>
@@ -43,6 +47,26 @@ export function App() {
               <Typography variant="caption" color="text.secondary">
                 (c) {new Date().getFullYear()} - Todos os direitos reservados.
               </Typography>
+            </Stack>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Link
+                component={RouterLink}
+                to="/privacy"
+                underline="hover"
+                color="text.primary"
+                fontWeight={600}
+              >
+                Politica de Privacidade
+              </Link>
+              <Link
+                component={RouterLink}
+                to="/contact"
+                underline="hover"
+                color="text.primary"
+                fontWeight={600}
+              >
+                Contato
+              </Link>
             </Stack>
           </Stack>
         </Container>
