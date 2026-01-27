@@ -4,6 +4,7 @@ import {
   Button,
   Container,
   Paper,
+  Alert,
   Stack,
   Table,
   TableBody,
@@ -202,6 +203,10 @@ export function ResultPage() {
               <ResultCharts results={results} />
             </Box>
           </Stack>
+
+          <Alert severity="info">
+            Dica: use este resultado para identificar seus pontos fortes e focar nos conteúdos que precisam de mais atenção.
+          </Alert>
 
           <Stack spacing={2}>
             <Typography variant="h5">Performance por matéria</Typography>

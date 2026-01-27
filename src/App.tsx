@@ -87,6 +87,9 @@ export function App() {
               </Link>
             </Stack>
           </Stack>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Projeto educacional independente, sem vínculo com o INEP.
+          </Typography>
         </Container>
       </Box>
     </Box>

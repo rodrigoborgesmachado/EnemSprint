@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Paper,
   Stack,
   TextField,
   Typography,
@@ -186,6 +187,14 @@ export function HomePage() {
               Escolha a prova, ajuste o tempo e simule o dia da prova.
             </Typography>
           </Stack>
+          <Paper variant="outlined" sx={{ p: { xs: 2, md: 3 } }}>
+            <Typography variant="h6" gutterBottom>
+              Simulados do ENEM, IFTM e UFU
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Correção automática, análise por matéria e histórico no seu dispositivo. Treine gestão de tempo e acompanhe sua evolução — sem login e sem anúncios.
+            </Typography>
+          </Paper>
           <TextField
             label="Buscar por ano, dia ou cor"
             placeholder="Ex: 2022, Dia 1, Azul"
