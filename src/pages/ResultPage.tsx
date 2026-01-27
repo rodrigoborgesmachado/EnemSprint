@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+﻿import { useEffect, useMemo } from 'react'
 import {
   Box,
   Button,
@@ -32,6 +32,7 @@ export function ResultPage() {
   const { codigo } = useParams()
   const { state, dispatch } = useTestSession()
   const MIN_QUESTIONS_FOR_RANKING = 3
+  const MIN_SUBJECTS_FOR_RANKING = 2
 
   const results = useMemo(() => {
     if (state.results) return state.results
@@ -89,6 +90,7 @@ export function ResultPage() {
     () => subjectStats.filter((item) => item.total >= MIN_QUESTIONS_FOR_RANKING),
     [subjectStats]
   )
+  const hasRankingData = rankedSubjects.length >= MIN_SUBJECTS_FOR_RANKING
 
   const bestSubjects = useMemo(
     () =>
@@ -230,16 +232,12 @@ export function ResultPage() {
               </Table>
             </Paper>
 
-            {rankedSubjects.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                Ainda não há dados suficientes para ranking por matéria.
-              </Typography>
-            ) : (
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Pontos fortes
-                  </Typography>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+              <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Pontos fortes
+                </Typography>
+                {hasRankingData ? (
                   <Stack spacing={1}>
                     {bestSubjects.map((item) => (
                       <Typography key={item.subject} variant="body2" color="text.secondary">
@@ -247,11 +245,17 @@ export function ResultPage() {
                       </Typography>
                     ))}
                   </Stack>
-                </Paper>
-                <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Pontos a melhorar
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Ainda não há dados suficientes para ranking por matéria.
                   </Typography>
+                )}
+              </Paper>
+              <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                <Typography variant="subtitle1" gutterBottom>
+                  Pontos a melhorar
+                </Typography>
+                {hasRankingData ? (
                   <Stack spacing={1}>
                     {improvementSubjects.map((item) => (
                       <Typography key={item.subject} variant="body2" color="text.secondary">
@@ -259,9 +263,13 @@ export function ResultPage() {
                       </Typography>
                     ))}
                   </Stack>
-                </Paper>
-              </Stack>
-            )}
+                ) : (
+                  <Typography variant="body2" color="text.secondary">
+                    Ainda não há dados suficientes para ranking por matéria.
+                  </Typography>
+                )}
+              </Paper>
+            </Stack>
           </Stack>
 
           <Stack spacing={2}>
